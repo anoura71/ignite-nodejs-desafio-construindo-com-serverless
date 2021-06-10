@@ -1,0 +1,10 @@
+# /*.js
+node_modules
+coverage
+dist
+tmp
+
+.dynamodb
+.serverless
+.vscode
+.webpack

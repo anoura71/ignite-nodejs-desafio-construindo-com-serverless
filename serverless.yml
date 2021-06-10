@@ -1,0 +1,118 @@
+service:
+  name: desafioserverless
+
+plugins:
+  - serverless-dotenv-plugin
+  - serverless-offline
+  - serverless-webpack
+  - serverless-dynamodb-local
+
+custom:
+  webpack:
+    webpackConfig: ./webpack.config.js
+    includeModules: true
+  dynamodb:
+    stages:
+      - dev
+      - local
+    start:
+      port: 8000
+      inmemory: true
+      migrate: true
+  bucket: ${env:S3_BUCKET}
+
+provider:
+  name: aws
+  region: ${env:S3_REGION}
+  runtime: nodejs14.x
+
+functions:
+  hello:
+    handler: src/functions/hello.handle
+    events:
+      - http:
+          path: /hello
+          method: GET
+          cors: true
+  createUser:
+    handler: src/functions/createUser.handle
+    events:
+      - http:
+          path: /users
+          method: POST
+          cors: true
+  listUsers:
+    handler: src/functions/listUsers.handle
+    events:
+      - http:
+          path: /users
+          method: GET
+          cors: true
+  createTodo:
+    handler: src/functions/createTodo.handle
+    events:
+      - http:
+          path: /todos/{user_id}
+          method: POST
+          cors: true
+  listTodos:
+    handler: src/functions/listTodos.handle
+    events:
+      - http:
+          path: /todos/{user_id}
+          method: GET
+          cors: true
+  markTodoAsDone:
+    handler: src/functions/markTodoAsDone.handle
+    events:
+      - http:
+          path: /todos/{id}/done
+          method: PATCH
+          cors: true
+  updateTodo:
+    handler: src/functions/updateTodo.handle
+    events:
+      - http:
+          path: /todos/{id}
+          method: PUT
+          cors: true
+  deleteTodo:
+    handler: src/functions/deleteTodo.handle
+    events:
+      - http:
+          path: /todos/{id}
+          method: DELETE
+          cors: true
+
+resources:
+  Resources:
+    dbUsers:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: users
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+    dbTodos:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: todos
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: user_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+          - AttributeName: user_id
+            KeyType: RANGE
